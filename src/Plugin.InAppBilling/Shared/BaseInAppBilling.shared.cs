@@ -80,7 +80,7 @@ namespace Plugin.InAppBilling
         /// <param name="itemType">Type of product</param>
         /// <returns>The current purchases</returns>
         public virtual Task<IEnumerable<InAppBillingPurchase>> GetPurchasesHistoryAsync(ItemType itemType, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IEnumerable<InAppBillingPurchase>>(new List<InAppBillingPurchase>());
+            Task.FromResult<IEnumerable<InAppBillingPurchase>>([]);
 
         /// <summary>
         /// Purchase a specific product or subscription

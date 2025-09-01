@@ -177,7 +177,7 @@ namespace Plugin.InAppBilling
         /// currency. For example, if price is "€7.99", price_amount_micros is "7990000". 
         /// This value represents the localized, rounded price for a particular currency.
         /// </summary>
-        public Int64 MicrosPrice { get; set; }
+        public long MicrosPrice { get; set; }
 
         /// <summary>
         /// Extra information for apple platforms

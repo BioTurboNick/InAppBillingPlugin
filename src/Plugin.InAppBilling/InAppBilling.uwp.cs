@@ -146,30 +146,15 @@ namespace Plugin.InAppBilling
     /// </summary>
     static class CurrentAppMock
     {
-        public static async Task<IEnumerable<UnfulfilledConsumable>> GetAvailableConsumables(bool isTestingMode)
-        {
-            return isTestingMode ? await CurrentAppSimulator.GetUnfulfilledConsumablesAsync() : await CurrentApp.GetUnfulfilledConsumablesAsync();
-        }
+        public static async Task<IEnumerable<UnfulfilledConsumable>> GetAvailableConsumables(bool isTestingMode) => isTestingMode ? await CurrentAppSimulator.GetUnfulfilledConsumablesAsync() : await CurrentApp.GetUnfulfilledConsumablesAsync();
 
-        public static async Task<FulfillmentResult> ReportConsumableFulfillmentAsync(bool isTestingMode, string productId, Guid transactionId)
-        {
-            return isTestingMode ? await CurrentAppSimulator.ReportConsumableFulfillmentAsync(productId, transactionId) : await CurrentApp.ReportConsumableFulfillmentAsync(productId, transactionId);
-        }
+        public static async Task<FulfillmentResult> ReportConsumableFulfillmentAsync(bool isTestingMode, string productId, Guid transactionId) => isTestingMode ? await CurrentAppSimulator.ReportConsumableFulfillmentAsync(productId, transactionId) : await CurrentApp.ReportConsumableFulfillmentAsync(productId, transactionId);
 
-        public static async Task<ListingInformation> LoadListingInformationAsync(bool isTestingMode)
-        {
-            return isTestingMode ? await CurrentAppSimulator.LoadListingInformationAsync() : await CurrentApp.LoadListingInformationAsync();
-        }
+        public static async Task<ListingInformation> LoadListingInformationAsync(bool isTestingMode) => isTestingMode ? await CurrentAppSimulator.LoadListingInformationAsync() : await CurrentApp.LoadListingInformationAsync();
 
-        public static async Task<string> GetAppReceiptAsync(bool isTestingMode)
-        {
-            return isTestingMode ? await CurrentAppSimulator.GetAppReceiptAsync() : await CurrentApp.GetAppReceiptAsync();
-        }
+        public static async Task<string> GetAppReceiptAsync(bool isTestingMode) => isTestingMode ? await CurrentAppSimulator.GetAppReceiptAsync() : await CurrentApp.GetAppReceiptAsync();
 
-        public static async Task<PurchaseResults> RequestProductPurchaseAsync(bool isTestingMode, string productId)
-        {
-            return isTestingMode ? await CurrentAppSimulator.RequestProductPurchaseAsync(productId) : await CurrentApp.RequestProductPurchaseAsync(productId);
-        }
+        public static async Task<PurchaseResults> RequestProductPurchaseAsync(bool isTestingMode, string productId) => isTestingMode ? await CurrentAppSimulator.RequestProductPurchaseAsync(productId) : await CurrentApp.RequestProductPurchaseAsync(productId);
     }
 
     static class InAppBillingHelperUwp
@@ -210,25 +195,16 @@ namespace Plugin.InAppBilling
                 };
                 purchase.PurchaseToken = purchase.Id;
                 purchase.TransactionIdentifier = purchase.Id;
-                purchase.ProductIds = new string[] { purchase.ProductId };
+                purchase.ProductIds = [purchase.ProductId];
 
                 // Map native UWP status to PurchaseState
-                switch (status)
+                purchase.State = status switch
                 {
-                    case ProductPurchaseStatus.AlreadyPurchased:
-                    case ProductPurchaseStatus.Succeeded:
-                        purchase.State = PurchaseState.Purchased;
-                        break;
-                    case ProductPurchaseStatus.NotFulfilled:
-                        purchase.State = PurchaseState.Deferred;
-                        break;
-                    case ProductPurchaseStatus.NotPurchased:
-                        purchase.State = PurchaseState.Canceled;
-                        break;
-                    default:
-                        purchase.State = PurchaseState.Unknown;
-                        break;
-                }
+                    ProductPurchaseStatus.AlreadyPurchased or ProductPurchaseStatus.Succeeded => PurchaseState.Purchased,
+                    ProductPurchaseStatus.NotFulfilled => PurchaseState.Deferred,
+                    ProductPurchaseStatus.NotPurchased => PurchaseState.Canceled,
+                    _ => PurchaseState.Unknown,
+                };
 
                 // Add to list of purchases
                 purchases.Add(purchase);

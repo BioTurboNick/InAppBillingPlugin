@@ -155,15 +155,12 @@ namespace Plugin.InAppBilling
         /// </summary>
 		public static Func<SKPaymentQueue, SKPayment, SKProduct, bool> OnShouldAddStorePayment { get; set; } = null;
 
-		/// <summary>
-		/// Default constructor for In App Billing on iOS
-		/// </summary>
-		public InAppBillingImplementation()
-		{
-			Init();
-		}
+        /// <summary>
+        /// Default constructor for In App Billing on iOS
+        /// </summary>
+        public InAppBillingImplementation() => Init();
 
-		void Init()
+        void Init()
 		{
 			if(paymentObserver != null)
 				return;
@@ -210,7 +207,7 @@ namespace Plugin.InAppBilling
 
 		Task<IEnumerable<SKProduct>> GetProductAsync(string[] productId, CancellationToken cancellationToken)
 		{
-			var productIdentifiers = NSSet.MakeNSObjectSet<NSString>(productId.Select(i => new NSString(i)).ToArray());
+			var productIdentifiers = NSSet.MakeNSObjectSet<NSString>([.. productId.Select(i => new NSString(i))]);
 
 			var productRequestDelegate = new ProductRequestDelegate(IgnoreInvalidProducts);
 
@@ -257,12 +254,12 @@ namespace Plugin.InAppBilling
 					if (allTransactions.Count == 0)
 						tcsTransaction.TrySetException(new InAppBillingPurchaseException(PurchaseError.RestoreFailed, "Restore Transactions Failed"));
 					else
-						tcsTransaction.TrySetResult(allTransactions.ToArray());
+						tcsTransaction.TrySetResult([.. allTransactions]);
 				}
 				else
 				{
 					allTransactions.AddRange(transactions);
-					tcsTransaction.TrySetResult(allTransactions.ToArray());
+					tcsTransaction.TrySetResult([.. allTransactions]);
 				}
 			});
 
@@ -336,7 +333,7 @@ namespace Plugin.InAppBilling
                 OriginalTransactionIdentifier = p.OriginalTransaction?.TransactionIdentifier,
                 TransactionIdentifier = p.TransactionIdentifier,
                 ProductId = p.Payment?.ProductIdentifier ?? string.Empty,
-                ProductIds = new string[] { p.Payment?.ProductIdentifier ?? string.Empty },
+                ProductIds = [p.Payment?.ProductIdentifier ?? string.Empty],
                 State = p.GetPurchaseState(),
                 ApplicationUsername = p.Payment?.ApplicationUsername ?? string.Empty,
 #if __IOS__ || __TVOS__
@@ -409,11 +406,8 @@ namespace Plugin.InAppBilling
                 using var _ = cancellationToken.Register(() => tcsTransaction.TrySetCanceled());
                 paymentObserver.TransactionCompleted += handler;
 
-			    var products = await GetProductAsync(new[] { productId }, cancellationToken);
-			    var product = products?.FirstOrDefault();
-			    if (product == null)
-				    throw new InAppBillingPurchaseException(PurchaseError.InvalidProduct);
-
+			    var products = await GetProductAsync([productId], cancellationToken);
+			    var product = (products?.FirstOrDefault()) ?? throw new InAppBillingPurchaseException(PurchaseError.InvalidProduct);
                 if (string.IsNullOrWhiteSpace(applicationUserName))
                 {
                     var payment = SKPayment.CreateFrom(product);
@@ -472,10 +466,10 @@ namespace Plugin.InAppBilling
         /// <exception cref="InAppBillingPurchaseException">If an error occurs during processing</exception>
         public override async Task<bool> ConsumePurchaseAsync(string productId, string transactionIdentifier, CancellationToken cancellationToken)
         {
-            var items = await FinalizePurchaseAsync(new [] { transactionIdentifier }, cancellationToken);
-            var item = items.FirstOrDefault();
+            var items = await FinalizePurchaseAsync([transactionIdentifier], cancellationToken);
+            var (_, success) = items.FirstOrDefault();
 
-            return item.Success;
+            return success;
         }
 
 
@@ -634,14 +628,9 @@ namespace Plugin.InAppBilling
 
 
 	[Preserve(AllMembers = true)]
-	class ProductRequestDelegate : NSObject, ISKProductsRequestDelegate, ISKRequestDelegate
+	class ProductRequestDelegate(bool ignoreInvalidProducts) : NSObject, ISKProductsRequestDelegate, ISKRequestDelegate
 	{
-        bool ignoreInvalidProducts;
-        public ProductRequestDelegate(bool ignoreInvalidProducts)
-        {
-            this.ignoreInvalidProducts = ignoreInvalidProducts;
-        }
-
+        readonly bool ignoreInvalidProducts = ignoreInvalidProducts;
         readonly TaskCompletionSource<IEnumerable<SKProduct>> tcsResponse = new();
 
 		public Task<IEnumerable<SKProduct>> WaitForResponse() =>
@@ -658,7 +647,7 @@ namespace Plugin.InAppBilling
             if (!ignoreInvalidProducts)
             {
                 var invalidProducts = response.InvalidProducts;
-                if (invalidProducts?.Any() ?? false)
+                if (invalidProducts.Length > 0)
                 {
                     tcsResponse.TrySetException(new InAppBillingPurchaseException(PurchaseError.InvalidProduct, "Invalid products found when querying product list", invalidProducts));
                     return;
@@ -676,22 +665,15 @@ namespace Plugin.InAppBilling
 
 
 	[Preserve(AllMembers = true)]
-	class PaymentObserver : SKPaymentTransactionObserver
+	class PaymentObserver(Action<InAppBillingPurchase> onPurchaseSuccess, Action<InAppBillingPurchase> onPurchaseFailure, Func<SKPaymentQueue, SKPayment, SKProduct, bool> onShouldAddStorePayment) : SKPaymentTransactionObserver
 	{
 		public event Action<SKPaymentTransaction, bool> TransactionCompleted;
 		public event Action<SKPaymentTransaction[]> TransactionsRestored;
 
-		readonly List<SKPaymentTransaction> restoredTransactions = new ();
-        readonly Action<InAppBillingPurchase> onPurchaseSuccess;
-        readonly Action<InAppBillingPurchase> onPurchaseFailure;
-        readonly Func<SKPaymentQueue, SKPayment, SKProduct, bool> onShouldAddStorePayment;
-
-		public PaymentObserver(Action<InAppBillingPurchase> onPurchaseSuccess, Action<InAppBillingPurchase> onPurchaseFailure, Func<SKPaymentQueue, SKPayment, SKProduct, bool> onShouldAddStorePayment)
-		{
-			this.onPurchaseSuccess = onPurchaseSuccess;
-            this.onPurchaseFailure = onPurchaseFailure;
-            this.onShouldAddStorePayment = onShouldAddStorePayment;
-		}
+		readonly List<SKPaymentTransaction> restoredTransactions = [];
+        readonly Action<InAppBillingPurchase> onPurchaseSuccess = onPurchaseSuccess;
+        readonly Action<InAppBillingPurchase> onPurchaseFailure = onPurchaseFailure;
+        readonly Func<SKPaymentQueue, SKPayment, SKProduct, bool> onShouldAddStorePayment = onShouldAddStorePayment;
 
         public override bool ShouldAddStorePayment(SKPaymentQueue queue, SKPayment payment, SKProduct product) =>
             onShouldAddStorePayment?.Invoke(queue, payment, product) ?? false;
@@ -804,7 +786,7 @@ namespace Plugin.InAppBilling
                 OriginalTransactionIdentifier = p.OriginalTransaction?.TransactionIdentifier,
                 TransactionIdentifier = p.TransactionIdentifier,
                 ProductId = p.Payment?.ProductIdentifier ?? string.Empty,
-                ProductIds = new string[] { p.Payment?.ProductIdentifier ?? string.Empty },
+                ProductIds = [p.Payment?.ProductIdentifier ?? string.Empty],
                 State = p.GetPurchaseState(),
 				PurchaseToken = finalToken,
                 ApplicationUsername = p.Payment?.ApplicationUsername
@@ -884,18 +866,19 @@ namespace Plugin.InAppBilling
             if (p?.SubscriptionPeriod?.Unit == null)
                 return null;
 
-            var subPeriod = new SubscriptionPeriod();
-
-            subPeriod.Unit = p.SubscriptionPeriod.Unit switch
+            var subPeriod = new SubscriptionPeriod
             {
-                SKProductPeriodUnit.Day => SubscriptionPeriodUnit.Day,
-                SKProductPeriodUnit.Month => SubscriptionPeriodUnit.Month,
-                SKProductPeriodUnit.Year => SubscriptionPeriodUnit.Year,
-                SKProductPeriodUnit.Week => SubscriptionPeriodUnit.Week,
-                _ => SubscriptionPeriodUnit.Unknown,
-            };
+                Unit = p.SubscriptionPeriod.Unit switch
+                {
+                    SKProductPeriodUnit.Day => SubscriptionPeriodUnit.Day,
+                    SKProductPeriodUnit.Month => SubscriptionPeriodUnit.Month,
+                    SKProductPeriodUnit.Year => SubscriptionPeriodUnit.Year,
+                    SKProductPeriodUnit.Week => SubscriptionPeriodUnit.Week,
+                    _ => SubscriptionPeriodUnit.Unknown,
+                },
 
-            subPeriod.NumberOfUnits = (int)p.SubscriptionPeriod.NumberOfUnits;
+                NumberOfUnits = (int)p.SubscriptionPeriod.NumberOfUnits
+            };
 
             return subPeriod;
         }

@@ -24,35 +24,31 @@ namespace Plugin.InAppBilling
                 TransactionDateUtc = DateTimeOffset.FromUnixTimeMilliseconds(purchase.PurchaseTime).DateTime,
                 ObfuscatedAccountId = purchase.AccountIdentifiers?.ObfuscatedAccountId,
                 ObfuscatedProfileId = purchase.AccountIdentifiers?.ObfuscatedProfileId,
-                TransactionIdentifier = purchase.PurchaseToken
-            };
-
-            finalPurchase.State = purchase.PurchaseState switch
-            {
-                Android.BillingClient.Api.PurchaseState.Pending => PurchaseState.PaymentPending,
-                Android.BillingClient.Api.PurchaseState.Purchased => PurchaseState.Purchased,
-                _ => PurchaseState.Unknown
+                TransactionIdentifier = purchase.PurchaseToken,
+                State = purchase.PurchaseState switch
+                {
+                    Android.BillingClient.Api.PurchaseState.Pending => PurchaseState.PaymentPending,
+                    Android.BillingClient.Api.PurchaseState.Purchased => PurchaseState.Purchased,
+                    _ => PurchaseState.Unknown
+                }
             };
             return finalPurchase;
         }
 
-        internal static InAppBillingPurchase ToIABPurchase(this PurchaseHistoryRecord purchase)
+        internal static InAppBillingPurchase ToIABPurchase(this PurchaseHistoryRecord purchase) => new()
         {
-            return new InAppBillingPurchase
-            {
-                ConsumptionState = ConsumptionState.NoYetConsumed,
-                OriginalJson = purchase.OriginalJson,
-                Signature = purchase.Signature,
-                Payload = purchase.DeveloperPayload,
-                ProductId = purchase.Products?.FirstOrDefault(),
-                Quantity = purchase.Quantity,
-                ProductIds = purchase.Products,
-                PurchaseToken = purchase.PurchaseToken,
-                TransactionDateUtc = DateTimeOffset.FromUnixTimeMilliseconds(purchase.PurchaseTime).DateTime,
-                State = PurchaseState.Unknown,
-                TransactionIdentifier = purchase.PurchaseToken
-            };
-        }
+            ConsumptionState = ConsumptionState.NoYetConsumed,
+            OriginalJson = purchase.OriginalJson,
+            Signature = purchase.Signature,
+            Payload = purchase.DeveloperPayload,
+            ProductId = purchase.Products?.FirstOrDefault(),
+            Quantity = purchase.Quantity,
+            ProductIds = purchase.Products,
+            PurchaseToken = purchase.PurchaseToken,
+            TransactionDateUtc = DateTimeOffset.FromUnixTimeMilliseconds(purchase.PurchaseTime).DateTime,
+            State = PurchaseState.Unknown,
+            TransactionIdentifier = purchase.PurchaseToken
+        };
 
         internal static InAppBillingProduct ToIAPProduct(this ProductDetails product)
         {

@@ -68,13 +68,13 @@ namespace Plugin.InAppBilling
         /// <returns>If Success</returns>
         public override Task<bool> ConnectAsync(bool enablePendingPurchases = true, CancellationToken cancellationToken = default)
         {
-            tcsPurchase?.TrySetCanceled();
+            tcsPurchase?.TrySetCanceled(CancellationToken.None);
             tcsPurchase = null;
 
-            tcsConnect?.TrySetCanceled();
+            tcsConnect?.TrySetCanceled(CancellationToken.None);
             tcsConnect = new TaskCompletionSource<bool>();
 
-            using var _ = cancellationToken.Register(() => tcsConnect.TrySetCanceled());
+            using var _ = cancellationToken.Register(() => tcsConnect.TrySetCanceled(CancellationToken.None));
             BillingClientBuilder = NewBuilder(Context);
             BillingClientBuilder.SetListener(OnPurchasesUpdated);
             if (enablePendingPurchases)
@@ -229,7 +229,7 @@ namespace Plugin.InAppBilling
             var purchasesResult = await BillingClient.QueryPurchaseHistoryAsync(historyParams);
 
 
-            return purchasesResult?.PurchaseHistoryRecords?.Select(p => p.ToIABPurchase()) ?? new List<InAppBillingPurchase>();
+            return purchasesResult?.PurchaseHistoryRecords?.Select(p => p.ToIABPurchase()) ?? [];
         }
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace Plugin.InAppBilling
                .SetProductId(newProductId)
                .Build();
 
-            var skuDetailsParams = QueryProductDetailsParams.NewBuilder().SetProductList(new[] { productList }).Build();
+            var skuDetailsParams = QueryProductDetailsParams.NewBuilder().SetProductList([productList]).Build();
 
             var skuDetailsResult = await BillingClient.QueryProductDetailsAsync(skuDetailsParams);
 
@@ -288,7 +288,7 @@ namespace Plugin.InAppBilling
             var prodDetailsParams = string.IsNullOrWhiteSpace(t) ? prodDetails.Build() : prodDetails.SetOfferToken(t).Build();
 
             var flowParams = BillingFlowParams.NewBuilder()
-                .SetProductDetailsParamsList(new[] { prodDetailsParams })
+                .SetProductDetailsParamsList([prodDetailsParams])
                 .SetSubscriptionUpdateParams(updateParams)
                 .Build();
 
@@ -339,7 +339,7 @@ namespace Plugin.InAppBilling
             }
 
             if (!string.IsNullOrWhiteSpace(obfuscatedProfileId) && string.IsNullOrWhiteSpace(obfuscatedAccountId))
-                throw new ArgumentNullException("You must set an account id if you are setting a profile id");
+                throw new ArgumentNullException(nameof(obfuscatedAccountId), "You must set an account id if you are setting a profile id");
 
             switch (itemType)
             {
@@ -364,7 +364,7 @@ namespace Plugin.InAppBilling
                 .SetProductId(productSku)
                 .Build();
 
-            var skuDetailsParams = QueryProductDetailsParams.NewBuilder().SetProductList(new[] { productList });
+            var skuDetailsParams = QueryProductDetailsParams.NewBuilder().SetProductList([productList]);
 
             var skuDetailsResult = await BillingClient.QueryProductDetailsAsync(skuDetailsParams.Build());
 
@@ -393,7 +393,7 @@ namespace Plugin.InAppBilling
 
 
             var billingFlowParams = BillingFlowParams.NewBuilder()
-                .SetProductDetailsParamsList(new[] { productDetailsParamsList });
+                .SetProductDetailsParamsList([productDetailsParamsList]);
 
 
 
