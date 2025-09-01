@@ -4,7 +4,7 @@ using Android.BillingClient.Api;
 
 namespace Plugin.InAppBilling
 {
-    internal static class Converters
+    static class Converters
     {
         internal static InAppBillingPurchase ToIABPurchase(this Purchase purchase)
         {
