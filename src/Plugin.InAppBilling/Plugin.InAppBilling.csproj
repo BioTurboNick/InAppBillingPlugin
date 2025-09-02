@@ -94,9 +94,9 @@
   <!-- Android -->
 
   <ItemGroup Condition=" $(TargetFramework.Contains('-android')) ">
-    <PackageReference Include="Xamarin.Android.Google.BillingClient" Version="7.1.1.4" />
+    <PackageReference Include="Xamarin.Android.Google.BillingClient" Version="8.0.0" />
   <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core">
-    <Version>2.8.7.4</Version>
+    <Version>2.9.2.1</Version>
   </PackageReference>
   </ItemGroup>
 
@@ -149,6 +149,17 @@
   <ItemGroup>
     <None Include="..\..\art\icon.png" PackagePath="icon.png" Pack="true" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime">
+      <Version>2.9.2.1</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Android">
+      <Version>2.9.2.1</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModelSavedState">
+      <Version>2.9.2.1</Version>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

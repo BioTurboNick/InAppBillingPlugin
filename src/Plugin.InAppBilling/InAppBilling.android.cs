@@ -181,10 +181,25 @@ namespace Plugin.InAppBilling
             var skuDetailsParams = QueryProductDetailsParams.NewBuilder().SetProductList(productList);
 
             var skuDetailsResult = await BillingClient.QueryProductDetailsAsync(skuDetailsParams.Build());
-            ParseBillingResult(skuDetailsResult?.Result, IgnoreInvalidProducts);
 
-            return skuDetailsResult.ProductDetails.Select(product => product.ToIAPProduct());
+            if (!IgnoreInvalidProducts && skuDetailsResult.UnfetchedProductList.Count > 0)
+            {
+                throw new InAppBillingPurchaseException(PurchaseError.ItemUnavailable,
+                    $"One or more products are not available",
+                    [.. skuDetailsResult.UnfetchedProductList.Select(p => $"{p.ProductId}({ParseUnfetchedProductStatusCode(p.StatusCodeValue)})")]);
+            }
+
+            return skuDetailsResult.ProductDetailsList.Select(product => product.ToIAPProduct());
         }
+
+        string ParseUnfetchedProductStatusCode(int statusCode) => statusCode switch
+        {
+            UnfetchedProduct.StatusCode.InvalidProductIdFormat => "INVALID_PRODUCT_ID_FORMAT",
+            UnfetchedProduct.StatusCode.NoEligibleOffer => "NO_ELIGIBLE_OFFER",
+            UnfetchedProduct.StatusCode.ProductNotFound => "PRODUCT_NOT_FOUND",
+            UnfetchedProduct.StatusCode.Unknown => "UNKNOWN",
+            _ => "UNRECOGNIZED"
+        };
 
 
         public override async Task<IEnumerable<InAppBillingPurchase>> GetPurchasesAsync(ItemType itemType, CancellationToken cancellationToken)
@@ -205,31 +220,6 @@ namespace Plugin.InAppBilling
             ParseBillingResult(purchasesResult.Result);
 
             return purchasesResult.Purchases.Select(p => p.ToIABPurchase());
-        }
-
-        /// <summary>
-        /// Android only: Returns the most recent purchase made by the user for each SKU, even if that purchase is expired, canceled, or consumed.
-        /// </summary>
-        /// <param name="itemType">Type of product</param>
-        /// <returns>The current purchases</returns>
-        public override async Task<IEnumerable<InAppBillingPurchase>> GetPurchasesHistoryAsync(ItemType itemType, CancellationToken cancellationToken)
-        {
-            if (BillingClient == null)
-                throw new InAppBillingPurchaseException(PurchaseError.ServiceUnavailable, "You are not connected to the Google Play App store.");
-
-            var skuType = itemType switch
-            {
-                ItemType.InAppPurchase => ProductType.Inapp,
-                ItemType.InAppPurchaseConsumable => ProductType.Inapp,
-                _ => ProductType.Subs
-            };
-
-            var historyParams = QueryPurchaseHistoryParams.NewBuilder().SetProductType(skuType).Build();
-            //TODO: Binding needs updated
-            var purchasesResult = await BillingClient.QueryPurchaseHistoryAsync(historyParams);
-
-
-            return purchasesResult?.PurchaseHistoryRecords?.Select(p => p.ToIABPurchase()) ?? [];
         }
 
         /// <summary>
@@ -264,9 +254,12 @@ namespace Plugin.InAppBilling
 
             var skuDetailsResult = await BillingClient.QueryProductDetailsAsync(skuDetailsParams);
 
-            ParseBillingResult(skuDetailsResult.Result);
+            if (skuDetailsResult.UnfetchedProductList.Count > 0)
+                throw new InAppBillingPurchaseException(PurchaseError.ItemUnavailable,
+                    $"One or more products are not available",
+                    [.. skuDetailsResult.UnfetchedProductList.Select(p => $"{p.ProductId}({ParseUnfetchedProductStatusCode(p.StatusCodeValue)})")]);
 
-            var skuDetails = skuDetailsResult.ProductDetails.FirstOrDefault() ?? throw new ArgumentException($"{newProductId} does not exist");
+            var skuDetails = skuDetailsResult.ProductDetailsList.FirstOrDefault() ?? throw new ArgumentException($"{newProductId} does not exist");
 
             //1 - BillingFlowParams.ProrationMode.ImmediateWithTimeProration
             //2 - BillingFlowParams.ProrationMode.ImmediateAndChargeProratedPrice
@@ -368,10 +361,12 @@ namespace Plugin.InAppBilling
 
             var skuDetailsResult = await BillingClient.QueryProductDetailsAsync(skuDetailsParams.Build());
 
-            ParseBillingResult(skuDetailsResult.Result);
+            if (skuDetailsResult.UnfetchedProductList.Count > 0)
+                throw new InAppBillingPurchaseException(PurchaseError.ItemUnavailable,
+                    $"One or more products are not available",
+                    [.. skuDetailsResult.UnfetchedProductList.Select(p => $"{p.ProductId}({ParseUnfetchedProductStatusCode(p.StatusCodeValue)})")]);
 
-
-            var skuDetails = skuDetailsResult.ProductDetails.FirstOrDefault() ?? throw new ArgumentException($"{productSku} does not exist");
+            var skuDetails = skuDetailsResult.ProductDetailsList.FirstOrDefault() ?? throw new ArgumentException($"{productSku} does not exist");
             BillingFlowParams.ProductDetailsParams productDetailsParamsList;
 
             if (itemType == ProductType.Subs)
