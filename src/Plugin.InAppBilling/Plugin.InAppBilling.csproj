@@ -9,7 +9,7 @@
     <Product>$(AssemblyName) ($(TargetFramework))</Product>
     <AssemblyVersion>9.0.0.0</AssemblyVersion>
     <AssemblyFileVersion>9.0.0.0</AssemblyFileVersion>
-    <MauiVersion>9.0.100</MauiVersion>
+    <MauiVersion>9.0.120</MauiVersion>
     <Version>9.0.0.0</Version>
     <Authors>James Montemagno</Authors>
     <IsPackable>True</IsPackable>
@@ -96,7 +96,7 @@
   <ItemGroup Condition=" $(TargetFramework.Contains('-android')) ">
     <PackageReference Include="Xamarin.Android.Google.BillingClient" Version="8.0.0" />
   <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core">
-    <Version>2.9.2.1</Version>
+    <Version>2.9.3</Version>
   </PackageReference>
   </ItemGroup>
 
@@ -152,13 +152,13 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime">
-      <Version>2.9.2.1</Version>
+      <Version>2.9.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Android">
-      <Version>2.9.2.1</Version>
+      <Version>2.9.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModelSavedState">
-      <Version>2.9.2.1</Version>
+      <Version>2.9.3</Version>
     </PackageReference>
   </ItemGroup>
 
