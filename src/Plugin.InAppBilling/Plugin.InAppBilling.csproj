@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+    <TargetFrameworks>net10.0;net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <SingleProject>true</SingleProject>
@@ -9,7 +9,7 @@
     <Product>$(AssemblyName) ($(TargetFramework))</Product>
     <AssemblyVersion>9.0.0.0</AssemblyVersion>
     <AssemblyFileVersion>9.0.0.0</AssemblyFileVersion>
-    <MauiVersion>9.0.120</MauiVersion>
+    <MauiVersion>10.0.10</MauiVersion>
     <Version>9.0.0.0</Version>
     <Authors>James Montemagno</Authors>
     <IsPackable>True</IsPackable>
@@ -21,7 +21,8 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Owners>JamesMontemagno</Owners>
-    <NoWarn>CA1422;CA1416</NoWarn>
+    <!-- Add CS warnings to NoWarn to suppress documentation-related diagnostics like CS1573/CS1591 -->
+    <NoWarn>$(NoWarn);CA1422;CA1416;CS1573;CS1591</NoWarn>
     <PackageProjectUrl>https://github.com/jamesmontemagno/InAppBillingPlugin</PackageProjectUrl>
     <Summary>.NET MAUI, and Windows plugin to In-App Billing.</Summary>
     <PackageTags>.net maui, macos, windows, xamarin, xamarin.forms, android, ios, uwp, windows phone, In-App Billing, purchases, plugin</PackageTags>
@@ -101,7 +102,7 @@
   </ItemGroup>
 
 
-<ItemGroup Condition=" $(TargetFramework.Contains('net9.0-android')) ">
+<ItemGroup Condition=" $(TargetFramework.Contains('net10.0-android')) ">
     <PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
   </ItemGroup>
 
@@ -150,7 +151,7 @@
     <None Include="..\..\art\icon.png" PackagePath="icon.png" Pack="true" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime">
       <Version>2.9.3</Version>
     </PackageReference>
