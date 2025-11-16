@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+    <TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <SingleProject>true</SingleProject>
@@ -9,7 +9,7 @@
     <Product>$(AssemblyName) ($(TargetFramework))</Product>
     <AssemblyVersion>9.0.0.0</AssemblyVersion>
     <AssemblyFileVersion>9.0.0.0</AssemblyFileVersion>
-    <MauiVersion>10.0.10</MauiVersion>
+    <MauiVersion>9.0.120</MauiVersion>
     <Version>9.0.0.0</Version>
     <Authors>James Montemagno</Authors>
     <IsPackable>True</IsPackable>
@@ -102,7 +102,7 @@
   </ItemGroup>
 
 
-<ItemGroup Condition=" $(TargetFramework.Contains('net10.0-android')) ">
+<ItemGroup Condition=" $(TargetFramework.Contains('net9.0-android')) ">
     <PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
   </ItemGroup>
 
@@ -151,7 +151,7 @@
     <None Include="..\..\art\icon.png" PackagePath="icon.png" Pack="true" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime">
       <Version>2.9.3</Version>
     </PackageReference>
